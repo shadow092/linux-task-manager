@@ -7,6 +7,7 @@
 #include <cctype>
 #include <signal.h>
 #include <errno.h>
+#include <unordered_set>
 
 namespace fs = std::filesystem;
 
@@ -26,6 +27,43 @@ bool SystemMonitor::killProcess(int pid)
 {
     if (::kill(pid, SIGTERM) == 0) {
         return true;
+    }
+
+    return false;
+}
+
+bool isSystemService(const std::string& processName) {
+    static const std::unordered_set<std::string> ignored = {
+        "plasmashell", "kwin_wayland", "kwin_x11", "kscreenlocker_welcome",
+        "org.kde.discovernotifier", "DiscoverNotifier", "kded6", "kded5",
+        "kglobalaccel6", "kglobalaccel5", "ksystemstats", "pipewire", "wireplumber",
+        "dbus-daemon", "dbus-broker", "systemd", "xwayland", "Xwayland", "agent"
+    };
+
+    std::string lowerName = processName;
+    std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(), ::tolower);
+
+    for (const auto& item : ignored) {
+        std::string lowerItem = item;
+        std::transform(lowerItem.begin(), lowerItem.end(), lowerItem.begin(), ::tolower);
+        if (lowerName.find(lowerItem) != std::string::npos) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool SystemMonitor::isGuiApplication(int pid) {
+
+    std::string envPath = "/proc/" + std::to_string(pid) + "/environ";
+    std::ifstream envFile(envPath, std::ios::binary);
+    if (!envFile.is_open()) return false;
+
+    std::string env;
+    while (std::getline(envFile, env, '\0')) {
+        if (env.rfind("WAYLAND_DISPLAY=", 0) == 0 || env.rfind("DISPLAY=", 0) == 0) {
+            return true;
+        }
     }
 
     return false;
@@ -92,6 +130,7 @@ void SystemMonitor::readSystemProcesses() {
         // 1. Filter out non-numeric directories (like /proc/sys, /proc/net, etc.)
         if (std::all_of(dirName.begin(), dirName.end(), ::isdigit)) {
             int pid = std::stoi(dirName);
+            if(isGuiApplication(pid)){
             ProcessData proc;
             proc.pid = pid;
 
@@ -112,6 +151,7 @@ void SystemMonitor::readSystemProcesses() {
             }
 
             processList.push_back(proc);
+            }
         }
     }
 

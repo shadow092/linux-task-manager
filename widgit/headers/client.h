@@ -8,6 +8,7 @@
 #include <QVariantList>
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
+#include <iostream>
 
 struct ProcessData {
     int pid;
@@ -32,8 +33,10 @@ public:
     QString currentPage() const;
     QVariantList reportProcessList() const;
     Q_INVOKABLE int killProcess(int pid);
-
     Q_INVOKABLE int connectToServer();
+    Q_INVOKABLE void print(const QString &message) {
+        std::cout << "[CPP STDOUT] " << message.toStdString() << std::endl;
+    }
 
 signals:
     void cpuUsageChanged();

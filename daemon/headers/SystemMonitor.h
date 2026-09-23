@@ -20,6 +20,7 @@ public:
     void readSystemProcesses();
     const std::vector<ProcessData>& getProcessList() const;
     bool killProcess(int pid);
+    bool isGuiApplication(int pid);
 
 private:
     std::string cpuPath = "/proc/stat";

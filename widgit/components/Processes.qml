@@ -44,6 +44,7 @@ Item {
                     font.bold: true
                     text: "ID"
                 }
+
             }
 
             Rectangle {
@@ -81,23 +82,23 @@ Item {
     }
 
     ScrollView {
+        id: scrollView
         anchors {
             left: parent.left
             right: parent.right
             top: tableHeader.bottom
-            bottom: tableFooter.bottom
+            bottom: tableFooter.top
         }
 
         clip: true
 
     Column{
         id:tableHolder
-        width: parent.width
+        width: scrollView.width
 
 
         Repeater{
         model: client1.processList
-
 
 
         delegate: Rectangle{
@@ -164,7 +165,8 @@ Item {
 
             MouseArea{
                 anchors.fill: parent
-                onClicked: {selectedPid = modelData.pid
+                onClicked: {
+                    selectedPid = modelData.pid
                 }
             }
         }
